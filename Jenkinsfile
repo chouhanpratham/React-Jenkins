@@ -62,26 +62,28 @@ pipeline {
         }
 
         stage('Deploy to Azure') {
-            steps {
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    sh '''
-                        echo "Logging into Azure..."
-                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                        
-                        echo "Setting subscription..."
-                        az account set --subscription $AZURE_SUBSCRIPTION_ID
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            sh '''
+                echo "Logging into Azure..."
+                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+                
+                echo "Setting subscription..."
+                az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                        echo "Deploying Vite build as static site..."
-                        az webapp deploy \
-                          --resource-group $RESOURCE_GROUP \
-                          --name $APP_SERVICE_NAME \
-                          --src-path $WORKSPACE/dist.zip \
-                          --type static
-                    '''
-                }
-            }
+                echo "Deploying Vite build as static site..."
+                az webapp deploy \
+                  --resource-group $RESOURCE_GROUP \
+                  --name $APP_SERVICE_NAME \
+                  --src-path $WORKSPACE/dist.zip \
+                  --type static \
+                  --target-path /
+            '''
         }
     }
+}
+
+
 
     post {
         success {
