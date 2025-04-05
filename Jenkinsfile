@@ -38,7 +38,15 @@ pipeline {
                 }
             }
         }
-        
+
+        stage('Build Vite App') {
+            steps {
+                dir('my-ikea') {
+                    sh 'npm run build'
+                }
+            }
+        }
+
         stage('Zip Vite Build') {
             steps {
                 dir('my-ikea/dist') {
@@ -46,47 +54,32 @@ pipeline {
                 }
             }
         }
-        
 
         stage('Archive Build Artifacts') {
             steps {
-                archiveArtifacts artifacts: 'my-ikea/dist.zip', fingerprint: true
+                archiveArtifacts artifacts: 'dist.zip', fingerprint: true
             }
         }
-        
-    
 
-stage('Deploy to Azure') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-            sh "az account set --subscription $AZURE_SUBSCRIPTION_ID"
-            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path $WORKSPACE/dist.zip --type static"
-        }
-    }
-}
+        stage('Deploy to Azure') {
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    sh '''
+                        echo "Logging into Azure..."
+                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+                        
+                        echo "Setting subscription..."
+                        az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-
-        stage('Deploy to Azure App Service') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            sh '''
-                echo "Logging into Azure..."
-                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                
-                echo "Setting subscription..."
-                az account set --subscription $AZURE_SUBSCRIPTION_ID
-
-                echo "Deploying Vite build using config-zip..."
-                az webapp deployment source config-zip \
-                  --resource-group $RESOURCE_GROUP \
-                  --name $APP_SERVICE_NAME \
-                  --src $WORKSPACE/my-ikea/dist.zip
-            '''
-        }
-    }
-}
-
+                        echo "Deploying Vite build as static site..."
+                        az webapp deploy \
+                          --resource-group $RESOURCE_GROUP \
+                          --name $APP_SERVICE_NAME \
+                          --src-path $WORKSPACE/dist.zip \
+                          --type static
+                    '''
+                }
+            }
         }
     }
 
@@ -95,8 +88,7 @@ stage('Deploy to Azure') {
             echo '✅ Vite App deployed successfully to Azure!'
         }
         failure {
-            echo '❌ Deployment failed. Check Kudu logs for details.'
+            echo '❌ Deployment failed. Check Azure logs for details.'
         }
     }
 }
-
