@@ -43,6 +43,8 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
+                    sh 'ls -al'
+                    sh 'ls -al build'
                 }
             }
         }
@@ -50,7 +52,7 @@ pipeline {
         stage('Archive Build Artifacts') {
             steps {
                 dir('my-ikea') {
-                    archiveArtifacts artifacts: 'build/**', fingerprint: true
+                    archiveArtifacts artifacts: '**', fingerprint: true
                 }
             }
         }
