@@ -43,15 +43,7 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
-                    sh 'zip -r build.zip build'
-                }
-            }
-        }
-
-        stage('Archive Build Artifacts') {
-            steps {
-                dir('my-ikea') {
-                    archiveArtifacts artifacts: '**', fingerprint: true
+                    sh "zip -r build.zip . -i build"
                 }
             }
         }
