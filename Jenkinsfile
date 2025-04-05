@@ -7,10 +7,6 @@ pipeline {
         APP_SERVICE_NAME = 'webapijenkinspratham2222225'
     }
 
-    tools {
-        nodejs 'NodeJS 20'
-    }
-
     stages {
         stage('Checkout') {
             steps {
