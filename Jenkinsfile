@@ -43,11 +43,7 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
-                    sh '''
-                    ls -al
-                    ls -al build || echo "No 'build' directory found"
-                    ls -al dist || echo "No 'dist' directory found"
-                    '''
+                    sh 'zip -r build.zip build'
                 }
             }
         }
@@ -63,21 +59,9 @@ pipeline {
         stage('Deploy to Azure') {
     steps {
         withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            sh '''
-                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                
-                # Create zip only from dist folder
-                cd my-ikea/dist
-                zip -r ../../build.zip ./*
-                cd ../..
-                
-                # Deploy to Azure App Service
-                az webapp deploy \
-                  --resource-group $RESOURCE_GROUP \
-                  --name $APP_SERVICE_NAME \
-                  --src-path build.zip \
-                  --type zip
-            '''
+            sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
+            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path build.zip --type zip"
+            sh "rm -f build.zip"
         }
     }
 }
