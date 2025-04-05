@@ -14,34 +14,20 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Init & Apply') {
             steps {
                 dir('terraform') {
                     sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Plan & Apply') {
-            steps {
-                dir('terraform') {
                     sh 'terraform plan -out=tfplan'
                     sh 'terraform apply -auto-approve tfplan'
                 }
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install & Build') {
             steps {
                 dir('my-ikea') {
                     sh 'npm install'
-                }
-            }
-        }
-
-        stage('Build Vite App') {
-            steps {
-                dir('my-ikea') {
                     sh 'npm run build'
                 }
             }
@@ -49,14 +35,14 @@ pipeline {
 
         stage('Add web.config') {
             steps {
-                script {
-                    writeFile file: 'my-ikea/dist/web.config', text: '''
+                dir('my-ikea/dist') {
+                    writeFile file: 'web.config', text: '''
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <system.webServer>
     <rewrite>
       <rules>
-        <rule name="ReactRoutes" stopProcessing="true">
+        <rule name="SPA" stopProcessing="true">
           <match url=".*" />
           <conditions logicalGrouping="MatchAll">
             <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
@@ -66,10 +52,6 @@ pipeline {
         </rule>
       </rules>
     </rewrite>
-    <staticContent>
-      <mimeMap fileExtension=".json" mimeType="application/json" />
-      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
-    </staticContent>
   </system.webServer>
 </configuration>
 '''
@@ -77,9 +59,11 @@ pipeline {
             }
         }
 
-        stage('Zip Vite Build') {
+        stage('Zip Build') {
             steps {
-                sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
+                dir('my-ikea/dist') {
+                    sh 'zip -r ../../dist.zip .'
+                }
             }
         }
 
@@ -99,15 +83,11 @@ pipeline {
                         echo "Setting subscription..."
                         az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                        echo "Checking contents of dist.zip"
-                        unzip -l dist.zip
-
-                        echo "Deploying Vite build to Azure..."
-                        az webapp deploy \
+                        echo "Deploying Vite build..."
+                        az webapp deployment source config-zip \
                           --resource-group $RESOURCE_GROUP \
                           --name $APP_SERVICE_NAME \
-                          --src-path dist.zip \
-                          --type zip
+                          --src dist.zip
                     '''
                 }
             }
@@ -116,10 +96,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Vite App deployed successfully to Azure!'
+            echo '✅ Deployment to Azure completed successfully!'
         }
         failure {
-            echo '❌ Deployment failed. Check Azure logs for more info.'
+            echo '❌ Deployment failed. Please check the Azure App logs or Jenkins console output.'
         }
     }
 }
