@@ -8,34 +8,38 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
-# App Service Plan
-resource "azurerm_app_service_plan" "plan" {
+resource "azurerm_service_plan" "plan" {
   name                = var.asp_name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  kind                = "Windows"
-
+  os_type             = "Windows"
   sku {
     tier = "Basic"
     size = "B1"
   }
 }
 
-resource "azurerm_app_service" "app" {
-  name                = var.as_name
+resource "azurerm_windows_web_app" "app" {
+  name                = "webapijenkinspratham2222225"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  app_service_plan_id = azurerm_app_service_plan.plan.id
+  service_plan_id     = azurerm_service_plan.plan.id
 
   site_config {
-    always_on         = true
-    windows_fx_version = "NODE|20-lts"
+    always_on = true
+
+    application_stack {
+      node_version = "~20"
+    }
   }
 
   app_settings = {
-    WEBSITE_NODE_DEFAULT_VERSION = "20.0.0"
-    WEBSITE_RUN_FROM_PACKAGE     = "1"
+    WEBSITE_NODE_DEFAULT_VERSION = "~20"
+    SCM_DO_BUILD_DURING_DEPLOYMENT = "false"
+    WEBSITE_RUN_FROM_PACKAGE = "1"
   }
 }
+
+
 
 
