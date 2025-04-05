@@ -77,8 +77,9 @@ pipeline {
                 az webapp deploy \
   --resource-group rg-jenkins \
   --name webapijenkinspratham2222225 \
-  --src-path /Users/pratham/.jenkins/workspace/react-jenkins@2/dist.zip \
+  --src-path dist.zip \
   --type zip
+
             '''
         }
     }
