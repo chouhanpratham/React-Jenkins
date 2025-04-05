@@ -67,11 +67,14 @@ pipeline {
             sh '''
                 echo "Logging into Azure..."
                 az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                
+
                 echo "Setting subscription..."
                 az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                echo "Deploying Vite build as static site..."
+                echo "Checking dist.zip contents..."
+                unzip -l $WORKSPACE/dist.zip
+
+                echo "Deploying Vite build..."
                 az webapp deploy \
                   --resource-group $RESOURCE_GROUP \
                   --name $APP_SERVICE_NAME \
@@ -82,6 +85,7 @@ pipeline {
         }
     }
 }
+
     }
 
 
