@@ -77,7 +77,7 @@ pipeline {
                   --name $APP_SERVICE_NAME \
                   --src-path $WORKSPACE/dist.zip \
                   --type static \
-                  --target-path /
+                  --target-path .
             '''
         }
     }
