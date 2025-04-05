@@ -50,22 +50,23 @@ pipeline {
                 }
             }
         }
-
         stage('Zip Build Folder') {
-            steps {
-                dir("my-ikea") {
-                    sh '''
-                    if [ -d "dist" ]; then
-                      echo "dist folder found. Zipping..."
-                      zip -r ../dist.zip dist
-                    else
-                      echo "Build failed or dist folder missing!"
-                      exit 1
-                    fi
-                    '''
-                }
-            }
+    steps {
+        dir("my-ikea") {
+            sh '''
+            if [ -d "dist" ]; then
+              echo "dist folder found. Zipping contents directly..."
+              cd dist
+              zip -r ../../dist.zip .
+            else
+              echo "Build failed or dist folder missing!"
+              exit 1
+            fi
+            '''
         }
+    }
+}
+        
 
         stage('Archive Build Artifacts') {
             steps {
