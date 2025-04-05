@@ -47,21 +47,16 @@ pipeline {
             }
         }
 
-        stage('Add web.config for Windows App Service') {
+        stage('Add web.config') {
             steps {
                 script {
-                    def webConfig = '''
+                    writeFile file: 'my-ikea/dist/web.config', text: '''
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <system.webServer>
-    <defaultDocument>
-      <files>
-        <add value="index.html" />
-      </files>
-    </defaultDocument>
     <rewrite>
       <rules>
-        <rule name="SPA" stopProcessing="true">
+        <rule name="ReactRoutes" stopProcessing="true">
           <match url=".*" />
           <conditions logicalGrouping="MatchAll">
             <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
@@ -71,17 +66,19 @@ pipeline {
         </rule>
       </rules>
     </rewrite>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
+    </staticContent>
   </system.webServer>
 </configuration>
 '''
-                    writeFile file: 'my-ikea/dist/web.config', text: webConfig
                 }
             }
         }
 
         stage('Zip Vite Build') {
             steps {
-                sh 'rm -f dist.zip'
                 sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
             }
         }
@@ -122,7 +119,7 @@ pipeline {
             echo '✅ Vite App deployed successfully to Azure!'
         }
         failure {
-            echo '❌ Deployment failed. Check Azure logs for details.'
+            echo '❌ Deployment failed. Check Azure logs for more info.'
         }
     }
 }
