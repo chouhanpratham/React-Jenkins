@@ -61,13 +61,17 @@ pipeline {
         }
     }
 }
-        
 
         stage('Archive Build Artifacts') {
             steps {
-                archiveArtifacts artifacts: 'dist.zip', fingerprint: true
+                dir('my-ikea') {
+                    
+                    archiveArtifacts artifacts: '**', fingerprint: true
+                }
             }
         }
+
+        
 
 
         stage('Deploy to Azure') {
