@@ -38,7 +38,9 @@ pipeline {
                 }
             }
         }
-steps {
+        
+stage('Zip Vite Build') {
+    steps {
         dir('my-ikea/dist') {
             sh 'zip -r ../../dist.zip *'
         }
