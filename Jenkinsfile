@@ -61,16 +61,27 @@ pipeline {
         }
 
         stage('Deploy to Azure') {
-            steps {
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-                    sh "cd my-ikea/dist"
-                    sh "zip -r ../../build.zip ."
-                    sh "cd ../.."
-                    sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path build.zip --type zip"
-                }
-            }
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            sh '''
+                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+                
+                # Create zip only from dist folder
+                cd my-ikea/dist
+                zip -r ../../build.zip ./*
+                cd ../..
+                
+                # Deploy to Azure App Service
+                az webapp deploy \
+                  --resource-group $AZURE_RESOURCE_GROUP \
+                  --name $APP_SERVICE_NAME \
+                  --src-path build.zip \
+                  --type zip
+            '''
         }
+    }
+}
+
     }
     post {
         success {
