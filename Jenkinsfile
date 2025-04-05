@@ -73,7 +73,7 @@ pipeline {
                 
                 # Deploy to Azure App Service
                 az webapp deploy \
-                  --resource-group $AZURE_RESOURCE_GROUP \
+                  --resource-group $RESOURCE_GROUP \
                   --name $APP_SERVICE_NAME \
                   --src-path build.zip \
                   --type zip
