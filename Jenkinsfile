@@ -75,11 +75,10 @@ pipeline {
 
                 echo "Deploying Vite build..."
                 az webapp deploy \
-                  --resource-group $RESOURCE_GROUP \
-                  --name $APP_SERVICE_NAME \
-                  --src-path $WORKSPACE/dist.zip \
-                  --type static \
-                  --target-path .
+  --resource-group rg-jenkins \
+  --name webapijenkinspratham2222225 \
+  --src-path /Users/pratham/.jenkins/workspace/react-jenkins@2/dist.zip \
+  --type zip
             '''
         }
     }
