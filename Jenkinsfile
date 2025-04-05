@@ -64,11 +64,9 @@ pipeline {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-                    sh "cd my-ikea"
-                    sh "cd dist"
-                    sh "zip -r ../build.zip ."
-
-                   
+                    sh "cd my-ikea/dist"
+                    sh "zip -r ../../build.zip ."
+                    sh "cd ../.."
                     sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path build.zip --type zip"
                 }
             }
