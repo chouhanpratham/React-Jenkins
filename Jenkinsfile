@@ -50,18 +50,13 @@ pipeline {
                 }
             }
         }
+
         stage('Zip Build Folder') {
     steps {
-        dir("my-ikea") {
+        dir("my-ikea/dist") {
             sh '''
-            if [ -d "dist" ]; then
-              echo "dist folder found. Zipping contents directly..."
-              cd dist
-              zip -r ../../dist.zip .
-            else
-              echo "Build failed or dist folder missing!"
-              exit 1
-            fi
+            echo "Zipping contents of dist directly..."
+            zip -r ../../../dist.zip .
             '''
         }
     }
@@ -79,7 +74,7 @@ pipeline {
     steps {
         withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
             sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path my-ikea/../dist.zip --type zip"
+            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path dist.zip --type zip"
         }
     }
 }
