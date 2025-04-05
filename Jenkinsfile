@@ -47,12 +47,35 @@ pipeline {
             }
         }
 
-        stage('Zip Vite Build') {
-    steps {
-        sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
-    }
-}
+        stage('Add web.config to dist') {
+            steps {
+                dir('my-ikea/dist') {
+                    writeFile file: 'web.config', text: '''
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <defaultDocument>
+      <files>
+        <clear />
+        <add value="index.html" />
+      </files>
+    </defaultDocument>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+'''
+                }
+            }
+        }
 
+        stage('Zip Vite Build') {
+            steps {
+                sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
+            }
+        }
 
         stage('Archive Build Artifacts') {
             steps {
@@ -61,34 +84,29 @@ pipeline {
         }
 
         stage('Deploy to Azure') {
-    steps {
-        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-            sh '''
-                echo "Logging into Azure..."
-                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    sh '''
+                        echo "Logging into Azure..."
+                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
 
-                echo "Setting subscription..."
-                az account set --subscription $AZURE_SUBSCRIPTION_ID
+                        echo "Setting subscription..."
+                        az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                echo "Checking contents of dist.zip"
-                unzip -l $WORKSPACE/dist.zip
+                        echo "Checking contents of dist.zip"
+                        unzip -l $WORKSPACE/dist.zip
 
-                echo "Deploying Vite build..."
-                az webapp deploy \
-  --resource-group rg-jenkins \
-  --name webapijenkinspratham2222225 \
-  --src-path dist.zip \
-  --type zip
-
-            '''
+                        echo "Deploying Vite build..."
+                        az webapp deploy \
+                            --resource-group $RESOURCE_GROUP \
+                            --name $APP_SERVICE_NAME \
+                            --src-path dist.zip \
+                            --type zip
+                    '''
+                }
+            }
         }
     }
-}
-
-
-    }
-
-
 
     post {
         success {
