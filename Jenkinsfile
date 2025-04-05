@@ -24,42 +24,30 @@ pipeline {
             }
         }
 
-        stage('Install & Build') {
+        stage('Install Dependencies') {
             steps {
                 dir('my-ikea') {
                     sh 'npm install'
+                }
+            }
+        }
+
+        stage('Build Vite App') {
+            steps {
+                dir('my-ikea') {
                     sh 'npm run build'
                 }
             }
         }
 
-        stage('Add web.config') {
+        stage('Copy web.config') {
             steps {
-                dir('my-ikea/dist') {
-                    writeFile file: 'web.config', text: '''
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <system.webServer>
-    <rewrite>
-      <rules>
-        <rule name="SPA" stopProcessing="true">
-          <match url=".*" />
-          <conditions logicalGrouping="MatchAll">
-            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
-            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
-          </conditions>
-          <action type="Rewrite" url="/index.html" />
-        </rule>
-      </rules>
-    </rewrite>
-  </system.webServer>
-</configuration>
-'''
-                }
+                // Ensure web.config exists in root of project or repo
+                sh 'cp my-ikea/web.config my-ikea/dist/web.config'
             }
         }
 
-        stage('Zip Build') {
+        stage('Zip Vite Build') {
             steps {
                 dir('my-ikea/dist') {
                     sh 'zip -r ../../dist.zip .'
@@ -83,11 +71,12 @@ pipeline {
                         echo "Setting subscription..."
                         az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                        echo "Deploying Vite build..."
-                        az webapp deployment source config-zip \
+                        echo "Deploying build to Azure App Service..."
+                        az webapp deploy \
                           --resource-group $RESOURCE_GROUP \
                           --name $APP_SERVICE_NAME \
-                          --src dist.zip
+                          --src-path dist.zip \
+                          --type zip
                     '''
                 }
             }
@@ -96,10 +85,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment to Azure completed successfully!'
+            echo '✅ Vite App deployed successfully to Azure!'
         }
         failure {
-            echo '❌ Deployment failed. Please check the Azure App logs or Jenkins console output.'
+            echo '❌ Deployment failed. Check Azure logs for details.'
         }
     }
 }
