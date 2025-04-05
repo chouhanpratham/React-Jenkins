@@ -38,22 +38,33 @@ pipeline {
                 }
             }
         }
-
         stage('Build') {
             steps {
-                dir('my-ikea') {
-                    sh 'npm run build'
-                }
-            }
+            sh '''
+                echo "Running Vite Build..."
+                npm run build
+                echo "After Build - Listing files:"
+                ls -la
+            '''
+            }    
         }
+
         stage('Zip Build Folder') {
             steps {
                 sh '''
+                if [ -d "dist" ]; then
+                echo "dist folder found. Zipping..."
                 cd dist
                 zip -r ../dist.zip .
-                '''
+                else
+                echo "Build failed or dist folder missing!"
+              exit 1
+                fi
+            '''
             }
         }
+
+        
 
         stage('Archive Build Artifacts') {
             steps {
