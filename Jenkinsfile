@@ -40,10 +40,31 @@ pipeline {
             }
         }
 
-        stage('Copy web.config') {
+        stage('Create web.config') {
             steps {
-                // Ensure web.config exists in root of project or repo
-                sh 'cp my-ikea/web.config my-ikea/dist/web.config'
+                dir('my-ikea/dist') {
+                    writeFile file: 'web.config', text: '''<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="SPA" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/" />
+        </rule>
+      </rules>
+    </rewrite>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+'''
+                }
             }
         }
 
