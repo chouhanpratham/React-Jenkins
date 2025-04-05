@@ -38,27 +38,32 @@ pipeline {
                 }
             }
         }
-
-        stage('Build Vite App') {
-            steps {
-                dir('my-ikea') {
-                    sh '''
-                        echo "Running Vite build..."
-                        npm run build
-                        echo "Zipping dist folder..."
-                        cd dist
-                        zip -r ../dist.zip .
-                        ls -lh ../dist.zip
-                    '''
-                }
-            }
+steps {
+        dir('my-ikea/dist') {
+            sh 'zip -r ../../dist.zip *'
         }
+    }
+}
+        
 
         stage('Archive Build Artifacts') {
             steps {
                 archiveArtifacts artifacts: 'my-ikea/dist.zip', fingerprint: true
             }
         }
+        stage('Zip Vite Build') {
+    
+
+stage('Deploy to Azure') {
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
+            sh "az account set --subscription $AZURE_SUBSCRIPTION_ID"
+            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path $WORKSPACE/dist.zip --type static"
+        }
+    }
+}
+
 
         stage('Deploy to Azure App Service') {
     steps {
