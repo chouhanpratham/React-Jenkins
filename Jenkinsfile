@@ -43,7 +43,10 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
-                    sh "zip -r build.zip . -i build"
+                    sh '''
+                    cd dist
+                    zip -r ../build.zip ./*
+                    cd ..
                 }
             }
         }
