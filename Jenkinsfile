@@ -47,32 +47,41 @@ pipeline {
             }
         }
 
-        stage('Add web.config to dist') {
+        stage('Add web.config for Windows App Service') {
             steps {
-                dir('my-ikea/dist') {
-                    writeFile file: 'web.config', text: '''
+                script {
+                    def webConfig = '''
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <system.webServer>
     <defaultDocument>
       <files>
-        <clear />
         <add value="index.html" />
       </files>
     </defaultDocument>
-    <staticContent>
-      <mimeMap fileExtension=".json" mimeType="application/json" />
-      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
-    </staticContent>
+    <rewrite>
+      <rules>
+        <rule name="SPA" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
   </system.webServer>
 </configuration>
 '''
+                    writeFile file: 'my-ikea/dist/web.config', text: webConfig
                 }
             }
         }
 
         stage('Zip Vite Build') {
             steps {
+                sh 'rm -f dist.zip'
                 sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
             }
         }
@@ -94,14 +103,14 @@ pipeline {
                         az account set --subscription $AZURE_SUBSCRIPTION_ID
 
                         echo "Checking contents of dist.zip"
-                        unzip -l $WORKSPACE/dist.zip
+                        unzip -l dist.zip
 
-                        echo "Deploying Vite build..."
+                        echo "Deploying Vite build to Azure..."
                         az webapp deploy \
-                            --resource-group $RESOURCE_GROUP \
-                            --name $APP_SERVICE_NAME \
-                            --src-path dist.zip \
-                            --type zip
+                          --resource-group $RESOURCE_GROUP \
+                          --name $APP_SERVICE_NAME \
+                          --src-path dist.zip \
+                          --type zip
                     '''
                 }
             }
