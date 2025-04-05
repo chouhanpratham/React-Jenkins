@@ -48,12 +48,11 @@ pipeline {
         }
 
         stage('Zip Vite Build') {
-            steps {
-                dir('my-ikea/dist') {
-                    sh 'zip -r ../../dist.zip *'
-                }
-            }
-        }
+    steps {
+        sh 'cd my-ikea/dist && zip -r ../../dist.zip .'
+    }
+}
+
 
         stage('Archive Build Artifacts') {
             steps {
@@ -71,7 +70,7 @@ pipeline {
                 echo "Setting subscription..."
                 az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                echo "Checking dist.zip contents..."
+                echo "Checking contents of dist.zip"
                 unzip -l $WORKSPACE/dist.zip
 
                 echo "Deploying Vite build..."
@@ -85,6 +84,7 @@ pipeline {
         }
     }
 }
+
 
     }
 
