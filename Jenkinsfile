@@ -47,6 +47,7 @@ pipeline {
                     cd dist
                     zip -r ../build.zip ./*
                     cd ..
+                    '''
                 }
             }
         }
