@@ -39,13 +39,13 @@ pipeline {
             }
         }
         
-stage('Zip Vite Build') {
-    steps {
-        dir('my-ikea/dist') {
-            sh 'zip -r ../../dist.zip *'
+        stage('Zip Vite Build') {
+            steps {
+                dir('my-ikea/dist') {
+                    sh 'zip -r ../../dist.zip *'
+                }
+            }
         }
-    }
-}
         
 
         stage('Archive Build Artifacts') {
@@ -53,7 +53,7 @@ stage('Zip Vite Build') {
                 archiveArtifacts artifacts: 'my-ikea/dist.zip', fingerprint: true
             }
         }
-        stage('Zip Vite Build') {
+        
     
 
 stage('Deploy to Azure') {
@@ -87,6 +87,7 @@ stage('Deploy to Azure') {
     }
 }
 
+        }
     }
 
     post {
@@ -98,3 +99,4 @@ stage('Deploy to Azure') {
         }
     }
 }
+
