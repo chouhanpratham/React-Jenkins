@@ -83,25 +83,25 @@ pipeline {
         }
 
         stage('Deploy to Azure') {
-            steps {
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    sh '''
-                        echo "Logging into Azure..."
-                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            sh '''
+                echo "Logging into Azure..."
+                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
 
-                        echo "Setting subscription..."
-                        az account set --subscription $AZURE_SUBSCRIPTION_ID
+                echo "Setting subscription..."
+                az account set --subscription $AZURE_SUBSCRIPTION_ID
 
-                        echo "Deploying build to Azure App Service..."
-                        az webapp deploy \
-                          --resource-group $RESOURCE_GROUP \
-                          --name $APP_SERVICE_NAME \
-                          --src-path dist.zip \
-                          --type zip
-                    '''
-                }
-            }
+                echo "Deploying ZIP using classic method..."
+                az webapp deployment source config-zip \
+                  --resource-group $RESOURCE_GROUP \
+                  --name $APP_SERVICE_NAME \
+                  --src dist.zip
+            '''
         }
+    }
+}
+
     }
 
     post {
