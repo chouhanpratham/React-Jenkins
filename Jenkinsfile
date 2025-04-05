@@ -40,45 +40,45 @@ pipeline {
         }
         stage('Build') {
             steps {
-            sh '''
-                echo "Running Vite Build..."
-                npm run build
-                echo "After Build - Listing files:"
-                ls -la
-            '''
-            }    
+                dir("my-ikea") {
+                    sh '''
+                    echo "Running Vite Build..."
+                    npm run build
+                    echo "After Build - Listing files:"
+                    ls -la
+                    '''
+                }
+            }
         }
 
         stage('Zip Build Folder') {
             steps {
-                sh '''
-                if [ -d "dist" ]; then
-                echo "dist folder found. Zipping..."
-                cd dist
-                zip -r ../dist.zip .
-                else
-                echo "Build failed or dist folder missing!"
-              exit 1
-                fi
-            '''
-            }
-        }
-
-        
-
-        stage('Archive Build Artifacts') {
-            steps {
-                dir('my_ikea') {
-                    archiveArtifacts artifacts: '**', fingerprint: true
+                dir("my-ikea") {
+                    sh '''
+                    if [ -d "dist" ]; then
+                      echo "dist folder found. Zipping..."
+                      zip -r ../dist.zip dist
+                    else
+                      echo "Build failed or dist folder missing!"
+                      exit 1
+                    fi
+                    '''
                 }
             }
         }
+
+        stage('Archive Build Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'dist.zip', fingerprint: true
+            }
+        }
+
 
         stage('Deploy to Azure') {
     steps {
         withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
             sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path dist.zip --type zip"
+            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path my-ikea/../dist.zip --type zip"
         }
     }
 }
