@@ -71,7 +71,7 @@ pipeline {
                 az account set --subscription $AZURE_SUBSCRIPTION_ID
 
                 echo "Deploying Vite build using config-zip..."
-                az webapp deployment source config-zip \
+                az webapp deploy source config-zip \
                   --resource-group $RESOURCE_GROUP \
                   --name $APP_SERVICE_NAME \
                   --src $WORKSPACE/my-ikea/dist.zip
