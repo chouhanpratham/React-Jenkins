@@ -43,8 +43,6 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
-                    sh 'ls -al'
-                    sh 'ls -al build'
                 }
             }
         }
