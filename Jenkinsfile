@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/chouhanpratham/React-Jenkins.git',
+                git branch: 'main', url: 'https://github.com/chouhanpratham/React-Jenkins.git'
             }
         }
 
@@ -28,36 +28,44 @@ pipeline {
 
         stage('Terraform Plan & Apply') {
             steps {
-                sh 'terraform plan -out=tfplan'
-                sh 'terraform apply -auto-approve tfplan'
+                dir('terraform') {
+                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform apply -auto-approve tfplan'
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                dir('my-ikea') {
+                    sh 'npm install'
+                }
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                dir('my-ikea') {
+                    sh 'npm run build'
+                }
             }
         }
 
         stage('Archive Build Artifacts') {
             steps {
-                archiveArtifacts artifacts: 'build/**', fingerprint: true
+                dir('my-ikea') {
+                    archiveArtifacts artifacts: 'build/**', fingerprint: true
+                }
             }
         }
 
         stage('Deploy to Azure') {
             steps {
-                withCredentials([azureServicePrincipal('AZURE_CREDENTIALS_ID')]) {
-                    sh '''
-                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
-                    az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_APP_NAME --src-path build.zip --type zip
-                    '''
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
+                    sh "cd my-ikea"
+                    sh "zip -r build.zip build"
+                    sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path build.zip --type zip"
                 }
             }
         }
