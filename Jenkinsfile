@@ -43,11 +43,22 @@ pipeline {
             steps {
                 dir('my-ikea') {
                     sh 'npm run build'
-                    sh '''
-                    cd dist
-                    zip -r ../build.zip ./*
-                    cd ..
-                    '''
+                }
+            }
+        }
+        stage('Zip Build Folder') {
+            steps {
+                sh '''
+                cd dist
+                zip -r ../dist.zip .
+                '''
+            }
+        }
+
+        stage('Archive Build Artifacts') {
+            steps {
+                dir('my_ikea') {
+                    archiveArtifacts artifacts: '**', fingerprint: true
                 }
             }
         }
@@ -56,8 +67,7 @@ pipeline {
     steps {
         withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
             sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path build.zip --type zip"
-            sh "rm -f build.zip"
+            sh "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path dist.zip --type zip"
         }
     }
 }
